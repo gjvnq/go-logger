@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"sync/atomic"
 	"time"
+	"strconv"
 )
 
 var (
@@ -46,6 +47,7 @@ type Worker struct {
 // Message contains the string to be logged, format is the format of string to be passed to sprintf
 type Info struct {
 	Id       uint64
+	GID      uint64
 	Time     string
 	Module   string
 	Level    string
@@ -64,7 +66,7 @@ type Logger struct {
 
 // Returns a proper string to be outputted for a particular info
 func (r *Info) Output() string {
-	msg := fmt.Sprintf(r.format, r.Id, r.Time, r.Filename, r.Line, r.Level, r.Message)
+	msg := fmt.Sprintf(r.format, r.Id, r.Time, r.Filename, r.Line, r.Level, r.GID, r.Message)
 	return msg
 }
 
@@ -137,11 +139,12 @@ func (l *Logger) Log(lvl string, message string) {
 }
 
 func (l *Logger) log_internal(lvl string, message string, pos int) {
-	var formatString string = "#%d %s %s:%d ▶ %.3s %s"
+	var formatString string = "#%d %s %s:%d\t ▶ %.3s{%d} %s"
 	_, filename, line, _ := runtime.Caller(pos)
 	filename = path.Base(filename)
 	info := &Info{
 		Id:       atomic.AddUint64(&logNo, 1),
+		GID:      getGID(),
 		Time:     time.Now().Format("2006-01-02 15:04:05"),
 		Module:   l.Module,
 		Level:    lvl,
@@ -255,9 +258,28 @@ func (l *Logger) StackAsCritical(message string) {
 	l.log_internal("CRITICAL", message+Stack(), 2)
 }
 
+// Prints this goroutine's execution stack as debug with an optional message at the begining
+func (l *Logger) StackAsDebug(message string) {
+	if message == "" {
+		message = "Stack info"
+	}
+	message += "\n"
+	l.log_internal("DEBUG", message+Stack(), 2)
+}
+
 // Returns a string with the execution stack for this goroutine
 func Stack() string {
 	buf := make([]byte, 1000000)
 	runtime.Stack(buf, false)
 	return string(buf)
+}
+
+// Returns the id of the current goroutine. This function is not exported on purpose.
+func getGID() uint64 {
+    b := make([]byte, 64)
+    b = b[:runtime.Stack(b, false)]
+    b = bytes.TrimPrefix(b, []byte("goroutine "))
+    b = b[:bytes.IndexByte(b, ' ')]
+    n, _ := strconv.ParseUint(string(b), 10, 64)
+    return n
 }
