@@ -230,6 +230,11 @@ func (l *Logger) InfoF(format string, a ...interface{}) {
 	l.log_internal("INFO", fmt.Sprintf(format, a...), 2)
 }
 
+// InfoNF is just like InfoF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) InfoNF(n int, format string, a ...interface{}) {
+	l.log_internal("INFO", fmt.Sprintf(format, a...), 2+n)
+}
+
 // Debug logs a message at Debug level
 func (l *Logger) Debug(message string) {
 	l.log_internal("DEBUG", message, 2)
@@ -238,6 +243,11 @@ func (l *Logger) Debug(message string) {
 // DebugF logs a message at Debug level using the same syntax and options as fmt.Printf
 func (l *Logger) DebugF(format string, a ...interface{}) {
 	l.log_internal("DEBUG", fmt.Sprintf(format, a...), 2)
+}
+
+// DebugNF is just like DebugF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) DebugNF(n int, format string, a ...interface{}) {
+	l.log_internal("DEBUG", fmt.Sprintf(format, a...), 2+n)
 }
 
 // Prints this goroutine's execution stack as an error with an optional message at the begining
