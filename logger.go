@@ -145,8 +145,9 @@ func InterfacesToString(raw_slice ...interface{}) string {
 		case string:
 			message += v
 		default:
-			message += fmt.Sprintf("%#v", v)
+			message += fmt.Sprint(v)
 		}
+		message += " "
 	}
 	return message
 }
