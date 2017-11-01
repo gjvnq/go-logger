@@ -10,9 +10,9 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"sync/atomic"
 	"time"
-	"strconv"
 )
 
 var (
@@ -134,11 +134,25 @@ func New(args ...interface{}) (*Logger, error) {
 
 // The log commnand is the function available to user to log message, lvl specifies
 // the degree of the messagethe user wants to log, message is the info user wants to log
-func (l *Logger) Log(lvl string, message string) {
+func (l *Logger) Log(lvl string, message interface{}) {
 	l.log_internal(lvl, message, 2)
 }
 
-func (l *Logger) log_internal(lvl string, message string, pos int) {
+func InterfacesToString(raw_slice ...interface{}) string {
+	message := ""
+	for _, raw := range raw_slice {
+		switch v := raw.(type) {
+		case string:
+			message += v
+		default:
+			message += fmt.Sprintf("%#v", v)
+		}
+	}
+	return message
+}
+
+func (l *Logger) log_internal(lvl string, raw_message interface{}, pos int) {
+	message := InterfacesToString(raw_message)
 	var formatString string = "#%d %s %s:%d\t ▶ %.3s{%d} %s"
 	_, filename, line, _ := runtime.Caller(pos)
 	filename = path.Base(filename)
@@ -157,8 +171,8 @@ func (l *Logger) log_internal(lvl string, message string, pos int) {
 }
 
 // Fatal is just like func l.Critical logger except that it is followed by exit to program
-func (l *Logger) Fatal(message string) {
-	l.log_internal("CRITICAL", message, 2)
+func (l *Logger) Fatal(messages ...interface{}) {
+	l.log_internal("CRITICAL", InterfacesToString(messages), 2)
 	os.Exit(1)
 }
 
@@ -168,9 +182,15 @@ func (l *Logger) FatalF(format string, a ...interface{}) {
 	os.Exit(1)
 }
 
+// FatalNF is just like FatalF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) FatalNF(n int, format string, a ...interface{}) {
+	l.log_internal("CRITICAL", fmt.Sprintf(format, a...), 2+n)
+	os.Exit(1)
+}
+
 // Panic is just like func l.Critical except that it is followed by a call to panic
-func (l *Logger) Panic(message string) {
-	l.log_internal("CRITICAL", message, 2)
+func (l *Logger) Panic(messages ...interface{}) {
+	l.log_internal("CRITICAL", InterfacesToString(messages), 2)
 	panic(message)
 }
 
@@ -180,9 +200,15 @@ func (l *Logger) PanicF(format string, a ...interface{}) {
 	panic(fmt.Sprintf(format, a...))
 }
 
+// PanicNF is just like PanicF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) PanicNF(n int, format string, a ...interface{}) {
+	l.log_internal("CRITICAL", fmt.Sprintf(format, a...), 2+n)
+	panic(fmt.Sprintf(format, a...))
+}
+
 // Critical logs a message at a Critical Level
-func (l *Logger) Critical(message string) {
-	l.log_internal("CRITICAL", message, 2)
+func (l *Logger) Critical(messages ...interface{}) {
+	l.log_internal("CRITICAL", InterfacesToString(messages), 2)
 }
 
 // CriticalF logs a message at Critical level using the same syntax and options as fmt.Printf
@@ -190,9 +216,14 @@ func (l *Logger) CriticalF(format string, a ...interface{}) {
 	l.log_internal("CRITICAL", fmt.Sprintf(format, a...), 2)
 }
 
+// CriticalNF is just like CriticalF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) CriticalNF(n int, format string, a ...interface{}) {
+	l.log_internal("CRITICAL", fmt.Sprintf(format, a...), 2+n)
+}
+
 // Error logs a message at Error level
-func (l *Logger) Error(message string) {
-	l.log_internal("ERROR", message, 2)
+func (l *Logger) Error(messages ...interface{}) {
+	l.log_internal("ERROR", InterfacesToString(messages), 2)
 }
 
 // ErrorF logs a message at Error level using the same syntax and options as fmt.Printf
@@ -200,9 +231,14 @@ func (l *Logger) ErrorF(format string, a ...interface{}) {
 	l.log_internal("ERROR", fmt.Sprintf(format, a...), 2)
 }
 
+// ErrorNF is just like ErrorF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) ErrorNF(n int, format string, a ...interface{}) {
+	l.log_internal("ERROR", fmt.Sprintf(format, a...), 2+n)
+}
+
 // Warning logs a message at Warning level
-func (l *Logger) Warning(message string) {
-	l.log_internal("WARNING", message, 2)
+func (l *Logger) Warning(messages ...interface{}) {
+	l.log_internal("WARNING", InterfacesToString(messages), 2)
 }
 
 // WarningF logs a message at Warning level using the same syntax and options as fmt.Printf
@@ -210,9 +246,14 @@ func (l *Logger) WarningF(format string, a ...interface{}) {
 	l.log_internal("WARNING", fmt.Sprintf(format, a...), 2)
 }
 
+// WarningNF is just like WarningF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) WarningNF(n int, format string, a ...interface{}) {
+	l.log_internal("INFO", fmt.Sprintf(format, a...), 2+n)
+}
+
 // Notice logs a message at Notice level
-func (l *Logger) Notice(message string) {
-	l.log_internal("NOTICE", message, 2)
+func (l *Logger) Notice(messages ...interface{}) {
+	l.log_internal("NOTICE", InterfacesToString(messages), 2)
 }
 
 // NoticeF logs a message at Notice level using the same syntax and options as fmt.Printf
@@ -220,9 +261,14 @@ func (l *Logger) NoticeF(format string, a ...interface{}) {
 	l.log_internal("NOTICE", fmt.Sprintf(format, a...), 2)
 }
 
+// NoticeNF is just like NoticeF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
+func (l *Logger) NoticeNF(n int, format string, a ...interface{}) {
+	l.log_internal("NOTICE", fmt.Sprintf(format, a...), 2+n)
+}
+
 // Info logs a message at Info level
-func (l *Logger) Info(message string) {
-	l.log_internal("INFO", message, 2)
+func (l *Logger) Info(messages ...interface{}) {
+	l.log_internal("INFO", InterfacesToString(messages), 2)
 }
 
 // InfoF logs a message at Info level using the same syntax and options as fmt.Printf
@@ -236,8 +282,8 @@ func (l *Logger) InfoNF(n int, format string, a ...interface{}) {
 }
 
 // Debug logs a message at Debug level
-func (l *Logger) Debug(message string) {
-	l.log_internal("DEBUG", message, 2)
+func (l *Logger) Debug(messages ...interface{}) {
+	l.log_internal("DEBUG", InterfacesToString(messages), 2)
 }
 
 // DebugF logs a message at Debug level using the same syntax and options as fmt.Printf
@@ -251,30 +297,18 @@ func (l *Logger) DebugNF(n int, format string, a ...interface{}) {
 }
 
 // Prints this goroutine's execution stack as an error with an optional message at the begining
-func (l *Logger) StackAsError(message string) {
-	if message == "" {
-		message = "Stack info"
-	}
-	message += "\n"
-	l.log_internal("ERROR", message+Stack(), 2)
+func (l *Logger) StackAsError(messages interface{}) {
+	l.log_internal("ERROR", InterfacesToString(messages, "\n", Stack()), 2)
 }
 
 // Prints this goroutine's execution stack as critical with an optional message at the begining
-func (l *Logger) StackAsCritical(message string) {
-	if message == "" {
-		message = "Stack info"
-	}
-	message += "\n"
-	l.log_internal("CRITICAL", message+Stack(), 2)
+func (l *Logger) StackAsCritical(messages interface{}) {
+	l.log_internal("CRITICAL", InterfacesToString(messages, "\n", Stack()), 2)
 }
 
 // Prints this goroutine's execution stack as debug with an optional message at the begining
-func (l *Logger) StackAsDebug(message string) {
-	if message == "" {
-		message = "Stack info"
-	}
-	message += "\n"
-	l.log_internal("DEBUG", message+Stack(), 2)
+func (l *Logger) StackAsDebug(messages interface{}) {
+	l.log_internal("DEBUG", InterfacesToString(messages, "\n", Stack()), 2)
 }
 
 // Returns a string with the execution stack for this goroutine
@@ -286,10 +320,10 @@ func Stack() string {
 
 // Returns the id of the current goroutine. This function is not exported on purpose.
 func getGID() uint64 {
-    b := make([]byte, 64)
-    b = b[:runtime.Stack(b, false)]
-    b = bytes.TrimPrefix(b, []byte("goroutine "))
-    b = b[:bytes.IndexByte(b, ' ')]
-    n, _ := strconv.ParseUint(string(b), 10, 64)
-    return n
+	b := make([]byte, 64)
+	b = b[:runtime.Stack(b, false)]
+	b = bytes.TrimPrefix(b, []byte("goroutine "))
+	b = b[:bytes.IndexByte(b, ' ')]
+	n, _ := strconv.ParseUint(string(b), 10, 64)
+	return n
 }
