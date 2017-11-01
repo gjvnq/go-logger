@@ -172,7 +172,7 @@ func (l *Logger) log_internal(lvl string, raw_message interface{}, pos int) {
 
 // Fatal is just like func l.Critical logger except that it is followed by exit to program
 func (l *Logger) Fatal(messages ...interface{}) {
-	l.log_internal("CRITICAL", InterfacesToString(messages), 2)
+	l.log_internal("CRITICAL", InterfacesToString(messages...), 2)
 	os.Exit(1)
 }
 
@@ -190,8 +190,8 @@ func (l *Logger) FatalNF(n int, format string, a ...interface{}) {
 
 // Panic is just like func l.Critical except that it is followed by a call to panic
 func (l *Logger) Panic(messages ...interface{}) {
-	l.log_internal("CRITICAL", InterfacesToString(messages), 2)
-	panic(message)
+	l.log_internal("CRITICAL", InterfacesToString(messages...), 2)
+	panic(InterfacesToString(messages...))
 }
 
 // PanicF is just like func l.CriticalF except that it is followed by a call to panic
@@ -208,7 +208,7 @@ func (l *Logger) PanicNF(n int, format string, a ...interface{}) {
 
 // Critical logs a message at a Critical Level
 func (l *Logger) Critical(messages ...interface{}) {
-	l.log_internal("CRITICAL", InterfacesToString(messages), 2)
+	l.log_internal("CRITICAL", InterfacesToString(messages...), 2)
 }
 
 // CriticalF logs a message at Critical level using the same syntax and options as fmt.Printf
@@ -223,7 +223,7 @@ func (l *Logger) CriticalNF(n int, format string, a ...interface{}) {
 
 // Error logs a message at Error level
 func (l *Logger) Error(messages ...interface{}) {
-	l.log_internal("ERROR", InterfacesToString(messages), 2)
+	l.log_internal("ERROR", InterfacesToString(messages...), 2)
 }
 
 // ErrorF logs a message at Error level using the same syntax and options as fmt.Printf
@@ -238,7 +238,7 @@ func (l *Logger) ErrorNF(n int, format string, a ...interface{}) {
 
 // Warning logs a message at Warning level
 func (l *Logger) Warning(messages ...interface{}) {
-	l.log_internal("WARNING", InterfacesToString(messages), 2)
+	l.log_internal("WARNING", InterfacesToString(messages...), 2)
 }
 
 // WarningF logs a message at Warning level using the same syntax and options as fmt.Printf
@@ -248,12 +248,12 @@ func (l *Logger) WarningF(format string, a ...interface{}) {
 
 // WarningNF is just like WarningF, but the n parameter indicates how many stack levels to go back when printing file name and line number info
 func (l *Logger) WarningNF(n int, format string, a ...interface{}) {
-	l.log_internal("INFO", fmt.Sprintf(format, a...), 2+n)
+	l.log_internal("WARNING", fmt.Sprintf(format, a...), 2+n)
 }
 
 // Notice logs a message at Notice level
 func (l *Logger) Notice(messages ...interface{}) {
-	l.log_internal("NOTICE", InterfacesToString(messages), 2)
+	l.log_internal("NOTICE", InterfacesToString(messages...), 2)
 }
 
 // NoticeF logs a message at Notice level using the same syntax and options as fmt.Printf
@@ -268,7 +268,7 @@ func (l *Logger) NoticeNF(n int, format string, a ...interface{}) {
 
 // Info logs a message at Info level
 func (l *Logger) Info(messages ...interface{}) {
-	l.log_internal("INFO", InterfacesToString(messages), 2)
+	l.log_internal("INFO", InterfacesToString(messages...), 2)
 }
 
 // InfoF logs a message at Info level using the same syntax and options as fmt.Printf
@@ -283,7 +283,7 @@ func (l *Logger) InfoNF(n int, format string, a ...interface{}) {
 
 // Debug logs a message at Debug level
 func (l *Logger) Debug(messages ...interface{}) {
-	l.log_internal("DEBUG", InterfacesToString(messages), 2)
+	l.log_internal("DEBUG", InterfacesToString(messages...), 2)
 }
 
 // DebugF logs a message at Debug level using the same syntax and options as fmt.Printf
