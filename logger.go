@@ -39,6 +39,7 @@ const (
 // if colored output is to be produced
 type Worker struct {
 	Minion *log.Logger
+	DisabledLevels map[string]bool
 	Color  int
 }
 
@@ -61,7 +62,7 @@ type Info struct {
 // worker is variable of Worker class that is used in bottom layers to log the message
 type Logger struct {
 	Module string
-	worker *Worker
+	Worker *Worker
 }
 
 // Returns a proper string to be outputted for a particular info
@@ -73,11 +74,16 @@ func (r *Info) Output() string {
 // Returns an instance of worker class, prefix is the string attached to every log,
 // flag determine the log params, color parameters verifies whether we need colored outputs or not
 func NewWorker(prefix string, flag int, color int, out io.Writer) *Worker {
-	return &Worker{Minion: log.New(out, prefix, flag), Color: color}
+	w := &Worker{Minion: log.New(out, prefix, flag), Color: color}
+	w.DisabledLevels = make(map[string]bool)
+	return w
 }
 
 // Function of Worker class to log a string based on level
 func (w *Worker) Log(level string, calldepth int, info *Info) error {
+	if w.DisabledLevels[level] {
+		return nil
+	}
 	if w.Color != 0 {
 		buf := &bytes.Buffer{}
 		buf.Write([]byte(colors[level]))
@@ -129,7 +135,7 @@ func New(args ...interface{}) (*Logger, error) {
 		}
 	}
 	newWorker := NewWorker("", 0, color, out)
-	return &Logger{Module: module, worker: newWorker}, nil
+	return &Logger{Module: module, Worker: newWorker}, nil
 }
 
 // The log commnand is the function available to user to log message, lvl specifies
@@ -168,7 +174,7 @@ func (l *Logger) log_internal(lvl string, raw_message interface{}, pos int) {
 		Line:     line,
 		format:   formatString,
 	}
-	l.worker.Log(lvl, 2, info)
+	l.Worker.Log(lvl, 2, info)
 }
 
 // Fatal is just like func l.Critical logger except that it is followed by exit to program
