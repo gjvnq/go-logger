@@ -138,10 +138,12 @@ func New(args ...interface{}) (*Logger, error) {
 	return &Logger{Module: module, Worker: newWorker}, nil
 }
 
-// The log commnand is the function available to user to log message, lvl specifies
-// the degree of the messagethe user wants to log, message is the info user wants to log
-func (l *Logger) Log(lvl string, message interface{}) {
-	l.log_internal(lvl, message, 2)
+func (l *Logger) Log(level string, messages ...interface{}) {
+	l.log_internal(level, InterfacesToString(messages...), 2)
+}
+
+func (l *Logger) LogF(level, format string, a ...interface{}) {
+	l.log_internal(level, fmt.Sprintf(format, a...), 2)
 }
 
 func InterfacesToString(raw_slice ...interface{}) string {
