@@ -39,7 +39,6 @@ const (
 // if colored output is to be produced
 type Worker struct {
 	Minion *log.Logger
-	DisabledLevels map[string]bool
 	Color  int
 }
 
@@ -62,7 +61,8 @@ type Info struct {
 // worker is variable of Worker class that is used in bottom layers to log the message
 type Logger struct {
 	Module string
-	Worker *Worker
+	Levels map[string]bool
+	worker *Worker
 }
 
 // Returns a proper string to be outputted for a particular info
@@ -74,16 +74,11 @@ func (r *Info) Output() string {
 // Returns an instance of worker class, prefix is the string attached to every log,
 // flag determine the log params, color parameters verifies whether we need colored outputs or not
 func NewWorker(prefix string, flag int, color int, out io.Writer) *Worker {
-	w := &Worker{Minion: log.New(out, prefix, flag), Color: color}
-	w.DisabledLevels = make(map[string]bool)
-	return w
+	return &Worker{Minion: log.New(out, prefix, flag), Color: color}
 }
 
 // Function of Worker class to log a string based on level
 func (w *Worker) Log(level string, calldepth int, info *Info) error {
-	if w.DisabledLevels[level] {
-		return nil
-	}
 	if w.Color != 0 {
 		buf := &bytes.Buffer{}
 		buf.Write([]byte(colors[level]))
@@ -121,6 +116,14 @@ func New(args ...interface{}) (*Logger, error) {
 	var module string = "DEFAULT"
 	var color int = 1
 	var out io.Writer = os.Stderr
+	var lvs map[string]bool = map[string]bool{
+		"CRITICAL": true,
+		"ERROR":    true,
+		"WARNING":  true,
+		"NOTICE":   true,
+		"DEBUG":    true,
+		"INFO":     true,
+	}
 
 	for _, arg := range args {
 		switch t := arg.(type) {
@@ -130,20 +133,22 @@ func New(args ...interface{}) (*Logger, error) {
 			color = t
 		case io.Writer:
 			out = t
+		case map[string]bool:
+			if t != nil {
+				lvs = t
+			}
 		default:
 			panic("logger: Unknown argument")
 		}
 	}
 	newWorker := NewWorker("", 0, color, out)
-	return &Logger{Module: module, Worker: newWorker}, nil
+	return &Logger{Module: module, Levels: lvs, worker: newWorker}, nil
 }
 
-func (l *Logger) Log(level string, messages ...interface{}) {
-	l.log_internal(level, InterfacesToString(messages...), 2)
-}
-
-func (l *Logger) LogF(level, format string, a ...interface{}) {
-	l.log_internal(level, fmt.Sprintf(format, a...), 2)
+// The log commnand is the function available to user to log message, lvl specifies
+// the degree of the messagethe user wants to log, message is the info user wants to log
+func (l *Logger) Log(lvl string, message interface{}) {
+	l.log_internal(lvl, message, 2)
 }
 
 func InterfacesToString(raw_slice ...interface{}) string {
@@ -176,7 +181,7 @@ func (l *Logger) log_internal(lvl string, raw_message interface{}, pos int) {
 		Line:     line,
 		format:   formatString,
 	}
-	l.Worker.Log(lvl, 2, info)
+	l.worker.Log(lvl, 2, info)
 }
 
 // Fatal is just like func l.Critical logger except that it is followed by exit to program
