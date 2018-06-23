@@ -181,7 +181,9 @@ func (l *Logger) log_internal(lvl string, raw_message interface{}, pos int) {
 		Line:     line,
 		format:   formatString,
 	}
-	l.worker.Log(lvl, 2, info)
+	if l.Levels[lvl] {
+		l.worker.Log(lvl, 2, info)
+	}
 }
 
 // Fatal is just like func l.Critical logger except that it is followed by exit to program
