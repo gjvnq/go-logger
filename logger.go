@@ -61,6 +61,7 @@ type Info struct {
 // worker is variable of Worker class that is used in bottom layers to log the message
 type Logger struct {
 	Module string
+	Levels map[string]bool
 	worker *Worker
 }
 
@@ -115,6 +116,14 @@ func New(args ...interface{}) (*Logger, error) {
 	var module string = "DEFAULT"
 	var color int = 1
 	var out io.Writer = os.Stderr
+	var lvs map[string]bool = map[string]bool{
+		"CRITICAL": true,
+		"ERROR":    true,
+		"WARNING":  true,
+		"NOTICE":   true,
+		"DEBUG":    true,
+		"INFO":     true,
+	}
 
 	for _, arg := range args {
 		switch t := arg.(type) {
@@ -124,12 +133,16 @@ func New(args ...interface{}) (*Logger, error) {
 			color = t
 		case io.Writer:
 			out = t
+		case map[string]bool:
+			if t != nil {
+				lvs = t
+			}
 		default:
 			panic("logger: Unknown argument")
 		}
 	}
 	newWorker := NewWorker("", 0, color, out)
-	return &Logger{Module: module, worker: newWorker}, nil
+	return &Logger{Module: module, Levels: lvs, worker: newWorker}, nil
 }
 
 // The log commnand is the function available to user to log message, lvl specifies
