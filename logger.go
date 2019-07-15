@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"sync/atomic"
 	"time"
+	"strings"
 )
 
 var (
@@ -331,7 +332,7 @@ func (l *Logger) StackAsDebug(messages interface{}) {
 func Stack() string {
 	buf := make([]byte, 1000000)
 	runtime.Stack(buf, false)
-	return string(buf)
+	return strings.TrimSpace(string(buf))
 }
 
 // Returns the id of the current goroutine. This function is not exported on purpose.
