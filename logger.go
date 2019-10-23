@@ -11,6 +11,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 	"strings"
@@ -41,6 +42,7 @@ const (
 type Worker struct {
 	Minion *log.Logger
 	Color  int
+	Lock   *sync.Mutex
 }
 
 // Info class, Contains all the info on what has to logged, time is the current time, Module is the specific module
@@ -75,11 +77,13 @@ func (r *Info) Output() string {
 // Returns an instance of worker class, prefix is the string attached to every log,
 // flag determine the log params, color parameters verifies whether we need colored outputs or not
 func NewWorker(prefix string, flag int, color int, out io.Writer) *Worker {
-	return &Worker{Minion: log.New(out, prefix, flag), Color: color}
+	return &Worker{Minion: log.New(out, prefix, flag), Color: color, Lock: new(sync.Mutex)}
 }
 
 // Function of Worker class to log a string based on level
 func (w *Worker) Log(level string, calldepth int, info *Info) error {
+	w.Lock.Lock()
+	defer w.Lock.Unlock()
 	if w.Color != 0 {
 		buf := &bytes.Buffer{}
 		buf.Write([]byte(colors[level]))
